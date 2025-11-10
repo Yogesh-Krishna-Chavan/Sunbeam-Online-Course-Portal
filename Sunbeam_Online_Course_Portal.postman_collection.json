@@ -1,0 +1,482 @@
+{
+	"info": {
+		"_postman_id": "sunbeam-course-portal",
+		"name": "Sunbeam Online Course Portal API",
+		"description": "API collection for Sunbeam Online Course Portal - Authentication, Student Management, and Course Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"        pm.collectionVariables.set(\"token\", jsonData.data.token);",
+									"        console.log(\"Token saved to collection variable\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "POST: User login (student, admin). Uses SHA256 password hashing.\n\n**Request Body:**\n- `email` (string, required): User email address\n- `password` (string, required): User password\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message\n- `data.token` (string): JWT token for authenticated requests\n\nThe token is automatically saved to the collection variable `{{token}}` for use in other requests."
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints"
+		},
+		{
+			"name": "Students",
+			"item": [
+				{
+					"name": "Register to Course",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Rahul Patil\",\n  \"email\": \"rahul@example.com\",\n  \"courseId\": 1,\n  \"mobileNo\": \"9876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/students/register-to-course",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"register-to-course"
+							]
+						},
+						"description": "POST: Registers a student into a course. Creates user with default password 'sunbeam' if email doesn't exist.\n\n**Request Body:**\n- `name` (string, required): Student name\n- `email` (string, required): Student email address\n- `courseId` (integer, required): Course ID to register for\n- `mobileNo` (string, optional): Mobile number\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message\n\n**Note:** If the email doesn't exist in the users table, a new user will be created with the default password 'sunbeam'."
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"newPassword\": \"newpass123\",\n  \"confirmPassword\": \"newpass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/students/change-password/:email",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"change-password",
+								":email"
+							],
+							"variable": [
+								{
+									"key": "email",
+									"value": "rahul@example.com",
+									"description": "User email address"
+								}
+							]
+						},
+						"description": "PUT: Changes user password. Validates that newPassword matches confirmPassword.\n\n**URL Parameters:**\n- `email` (string, required): User email address\n\n**Request Body:**\n- `newPassword` (string, required): New password\n- `confirmPassword` (string, required): Password confirmation (must match newPassword)\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message"
+					},
+					"response": []
+				}
+			],
+			"description": "Student management endpoints"
+		},
+		{
+			"name": "Courses",
+			"item": [
+				{
+					"name": "Get All Active Courses",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/courses/all-active-courses",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"all-active-courses"
+							]
+						},
+						"description": "GET: Get all active courses (public endpoint, no authentication required). Returns courses where end_date >= current date.\n\n**Response:**\n- `success` (boolean): Request success status\n- `data` (array): Array of course objects with fields:\n  - `course_id` (integer): Course ID\n  - `course_name` (string): Course name\n  - `description` (string): Course description\n  - `fees` (integer): Course fees\n  - `start_date` (date): Course start date\n  - `end_date` (date): Course end date\n  - `video_expire_days` (integer): Video expiration days\n- `message` (string): Message if no courses found"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Courses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/courses/all-courses?startDate=&endDate=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"all-courses"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "",
+									"description": "Filter courses where start_date >= startDate (format: YYYY-MM-DD)",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "",
+									"description": "Filter courses where end_date <= endDate (format: YYYY-MM-DD)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "GET: Get all courses with optional date filters (admin only). Requires admin authentication token.\n\n**Query Parameters (optional):**\n- `startDate` (string, optional): Filter courses where start_date >= startDate (format: YYYY-MM-DD)\n- `endDate` (string, optional): Filter courses where end_date <= endDate (format: YYYY-MM-DD)\n\n**Headers:**\n- `Authorization: Bearer {{token}}` (required): Admin JWT token\n\n**Response:**\n- `success` (boolean): Request success status\n- `data` (array): Array of course objects (all courses, including past ones)\n- `message` (string): Message if no records found"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Course",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courseName\": \"Python Programming\",\n  \"description\": \"Learn Python from scratch\",\n  \"fees\": 5000,\n  \"startDate\": \"2024-01-01\",\n  \"endDate\": \"2024-12-31\",\n  \"videoExpireDays\": 365\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/courses/add",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"add"
+							]
+						},
+						"description": "POST: Add a new course (admin only). Requires admin authentication token.\n\n**Headers:**\n- `Authorization: Bearer {{token}}` (required): Admin JWT token\n- `Content-Type: application/json` (required)\n\n**Request Body:**\n- `courseName` (string, required): Course name\n- `description` (string, required): Course description\n- `fees` (integer, required): Course fees\n- `startDate` (string, required): Course start date (format: YYYY-MM-DD)\n- `endDate` (string, required): Course end date (format: YYYY-MM-DD)\n- `videoExpireDays` (integer, required): Number of days until videos expire\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Course",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courseName\": \"Advanced Python Programming\",\n  \"description\": \"Advanced Python concepts and frameworks\",\n  \"fees\": 6000,\n  \"startDate\": \"2024-02-01\",\n  \"endDate\": \"2024-12-31\",\n  \"videoExpireDays\": 365\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/courses/update/:course_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"update",
+								":course_id"
+							],
+							"variable": [
+								{
+									"key": "course_id",
+									"value": "1",
+									"description": "Course ID to update"
+								}
+							]
+						},
+						"description": "PUT: Update a course by courseId (admin only). Requires admin authentication token.\n\n**URL Parameters:**\n- `course_id` (integer, required): Course ID to update\n\n**Headers:**\n- `Authorization: Bearer {{token}}` (required): Admin JWT token\n- `Content-Type: application/json` (required)\n\n**Request Body:**\n- `courseName` (string, required): Course name\n- `description` (string, required): Course description\n- `fees` (integer, required): Course fees\n- `startDate` (string, required): Course start date (format: YYYY-MM-DD)\n- `endDate` (string, required): Course end date (format: YYYY-MM-DD)\n- `videoExpireDays` (integer, required): Number of days until videos expire\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message\n- Returns 404 if course not found"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Course",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/courses/delete/:course_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"courses",
+								"delete",
+								":course_id"
+							],
+							"variable": [
+								{
+									"key": "course_id",
+									"value": "1",
+									"description": "Course ID to delete"
+								}
+							]
+						},
+						"description": "DELETE: Delete a course by courseId (admin only). Requires admin authentication token.\n\n**URL Parameters:**\n- `course_id` (integer, required): Course ID to delete\n\n**Headers:**\n- `Authorization: Bearer {{token}}` (required): Admin JWT token\n\n**Response:**\n- `success` (boolean): Request success status\n- `message` (string): Response message\n- Returns 404 if course not found"
+					},
+					"response": []
+				}
+			],
+			"description": "Course management endpoints"
+		},
+		{
+			"name": "Videos",
+			"item": [
+				{
+					"name": "Get Videos for Student",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/videos/all/:email/:course_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"all",
+								":email",
+								":course_id"
+							],
+							"variable": [
+								{ "key": "email", "value": "rahul@example.com", "description": "Student email" },
+								{ "key": "course_id", "value": "1", "description": "Course ID" }
+							]
+						},
+						"description": "GET: Get all non-expired videos for a student registered in a course (public). Filters videos by comparing `added_at + video_expire_days` with current time."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Videos (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/videos/all-videos?courseId=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"all-videos"
+							],
+							"query": [
+								{ "key": "courseId", "value": "", "description": "Optional: filter by course_id", "disabled": true }
+							]
+						},
+						"description": "GET: Get all videos (admin). Optional `courseId` query param to filter."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Video (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courseId\": 1,\n  \"title\": \"Intro to Topic\",\n  \"description\": \"Overview video\",\n  \"youtubeURL\": \"https://youtu.be/dQw4w9WgXcQ\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/videos/add",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"add"
+							]
+						},
+						"description": "POST: Add new video to a course (admin). Validates course existence."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Video (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"courseId\": 1,\n  \"title\": \"Updated Title\",\n  \"description\": \"Updated description\",\n  \"youtubeURL\": \"https://youtu.be/dQw4w9WgXcQ\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/videos/update/:video_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"update",
+								":video_id"
+							],
+							"variable": [
+								{ "key": "video_id", "value": "1", "description": "Video ID to update" }
+							]
+						},
+						"description": "PUT: Update a video's details (admin). Validates course existence, returns 404 if video not found."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Video (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/videos/delete/:video_id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"videos",
+								"delete",
+								":video_id"
+							],
+							"variable": [
+								{ "key": "video_id", "value": "1", "description": "Video ID to delete" }
+							]
+						},
+						"description": "DELETE: Delete a video by ID (admin). Returns 404 if not found."
+					},
+					"response": []
+				}
+			],
+			"description": "Video management endpoints"
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "GET: Health check endpoint to verify server is running.\n\n**Response:**\n- `status` (string): Server status (\"ok\" if running)"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:5000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
