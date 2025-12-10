@@ -1,0 +1,38 @@
+/* Base link styling */
+.navbar .nav-link.link-color {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.navbar .nav-link.link-color:hover,
+.navbar .nav-link.link-color.active {
+  color: #001aff;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+/* Brand spacing and logo */
+.navbar .navbar-brand span.fs-5 {
+  letter-spacing: 0.3px;
+}
+
+/* Admin dropdown alignment and styling */
+.navbar .dropdown-menu {
+  font-size: 0.9rem;
+}
+
+.navbar .dropdown-item.active,
+.navbar .dropdown-item:active {
+  background-color: #0dcaf0;
+  color: #fff;
+}
+
+.navbar .dropdown-item:hover {
+  background-color: rgba(13, 202, 240, 0.12);
+}
+
+/* Right side user label */
+.navbar .user-label {
+  font-size: 0.86rem;
+  opacity: 0.9;
+}

@@ -35,11 +35,12 @@ def login():
     user = results[0]
 
     # Create token
-    token = create_access_token(user["email"], {"role": user.get("role", "student")})
+    role = user.get("role", "student")
+    token = create_access_token(user["email"], {"role": role})
 
     return jsonify({
         "success": True,
         "message": "login successful",
-        "data": {"token": token}
+        "data": {"token": token, "role": role}
     }), 200
 

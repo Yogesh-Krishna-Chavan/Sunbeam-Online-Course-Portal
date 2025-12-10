@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request
 
 from backend.db import Database, execute_query
 from backend.middlewares.auth_middleware import check_admin_role
+from backend.utils.jwt_helper import decode_token
 
 COURSE_TABLE = "courses"
 
@@ -232,4 +233,88 @@ def delete_course(course_id: int):
         }), 500
     finally:
         connection.close()
+
+
+@courses_bp.get("/registered-courses")
+@check_admin_role
+def get_registered_courses():
+    """GET: get courses that have at least one student registered"""
+    sql = """
+        SELECT DISTINCT c.*, COUNT(s.reg_no) as student_count
+        FROM courses c
+        INNER JOIN students s ON c.course_id = s.course_id
+        GROUP BY c.course_id, c.course_name, c.description, c.fees, c.start_date, c.end_date, c.video_expire_days
+        ORDER BY student_count DESC
+    """
+    
+    try:
+        results = execute_query(sql)
+        
+        if not results or len(results) == 0:
+            return jsonify({
+                "success": True,
+                "message": "No courses with registrations found.",
+                "data": []
+            }), 200
+        
+        return jsonify({
+            "success": True,
+            "data": results
+        }), 200
+    
+    except mysql.connector.Error as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+@courses_bp.get("/my-courses")
+def get_my_courses():
+    """GET: courses registered by the logged-in student (token required)."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return jsonify({
+            "success": False,
+            "message": "Authorization header is missing"
+        }), 401
+
+    try:
+        token = auth_header.split(" ")[1] if " " in auth_header else auth_header
+        decoded = decode_token(token)
+        email = decoded.get("sub")
+    except Exception as exc:
+        return jsonify({
+            "success": False,
+            "message": f"Invalid token: {str(exc)}"
+        }), 401
+
+    sql = """
+        SELECT c.*
+        FROM courses c
+        INNER JOIN students s ON c.course_id = s.course_id
+        WHERE s.email = %s
+    """
+
+    try:
+        results = execute_query(sql, (email,))
+        return jsonify({
+            "success": True,
+            "data": results or []
+        }), 200
+    except mysql.connector.Error as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
